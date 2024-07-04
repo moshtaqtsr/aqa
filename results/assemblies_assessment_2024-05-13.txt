@@ -1,0 +1,23 @@
+Title: Assembly Assessment Report
+Institute: The Arctic University of Norway - Tromsø
+Written by: Mushtaq T. S. AL-Rubaye
+Time: 2024-05-13 16:19:14
+
+File	N50	Num Contigs	Contigs Quality	Genome Size	Genome Size Quality	GC Content	GC Content range	Eligibility
+51269934_VRE_2011.fasta	20194	282	Yes	2897134	Yes	37.37	-	Eligible
+51269933_VRE_2011.fasta	17088	327	Yes	2876287	Yes	36.98	-	Eligible
+51271178_NORM_2014.fasta	17991	299	Yes	2819020	Yes	36.77	-	Eligible
+51269935_VRE_2011.fasta	20626	293	Yes	2815875	Yes	37.31	-	Eligible
+51271224_VRE_2013.fasta	53867	172	Yes	2910684	Yes	37.22	-	Eligible
+51270240_NORM_2014.fasta	63008	141	Yes	2786956	Yes	37.21	-	Eligible
+51271044_NORM_2014.fasta	41927	168	Yes	2816453	Yes	37.29	-	Eligible
+51271189_NORM_2014.fasta	13702	344	Yes	2649372	No	37.28	-	Not Eligible
+51269936_VRE_2011.fasta	13801	367	Yes	2750951	Yes	37.48	-	Eligible
+51271056_VRE_2013.fasta	16544	334	Yes	2786646	Yes	37.28	-	Eligible
+51271509_NORM_2014.fasta	42891	188	Yes	2856561	Yes	36.87	-	Eligible
+51271057_VRE_2013.fasta	55951	172	Yes	2889665	Yes	36.8	-	Eligible
+51271055_VRE_2013.fasta	41207	208	Yes	2845306	Yes	36.64	-	Eligible
+51270811_NORM_2014.fasta	46017	216	Yes	2931921	Yes	36.9	-	Eligible
+51270816_NORM_2014.fasta	16323	314	Yes	2769337	Yes	37.04	-	Eligible
+51270243_NORM_2014.fasta	47464	204	Yes	2931159	Yes	36.84	-	Eligible
+51270819_NORM_2014.fasta	22277	280	Yes	2793318	Yes	37.08	-	Eligible
