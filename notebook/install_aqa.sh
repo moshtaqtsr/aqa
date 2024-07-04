@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Step 1: Download the latest version of aqa.py
-wget -O ~/aqa.py https://example.com/path/to/latest/aqa.py
+wget -O ~/aqa.py https://github.com/moshtaqtsr/aqa/blob/main/notebook/aqa.py
 
 # Step 2: Add shebang line to the Python script
 echo '#!/usr/bin/env python3' > ~/aqa
