@@ -9,7 +9,7 @@ The tool is particularly useful for ensuring genome assemblies meet quality stan
 
 1. Clone the `install_aqa.sh` script from the following link:
    ```
-wget https://raw.githubusercontent.com/moshtaqtsr/aqa/main/notebook/install_aqa.sh
+   wget https://raw.githubusercontent.com/moshtaqtsr/aqa/main/notebook/install_aqa.sh
    ```
 
 2. Make the script executable:
@@ -27,7 +27,7 @@ wget https://raw.githubusercontent.com/moshtaqtsr/aqa/main/notebook/install_aqa.
    aqa --help
    ```
 
-If any required libraries are missing, you will receive a notification. You can easily install them using:
+   If any required libraries are missing, you will receive a notification. You can easily install them using:
    ```
    pip install <library_name>
    ```
@@ -45,7 +45,6 @@ Alternatively, specify cutoffs for analysis:
 ```
 aqa --con-cut 400 --size_min 2800000 --size_max 3600000 --gc_min 36.6 --gc_max 37.6
 ```
-
 
 ## Authors
 
