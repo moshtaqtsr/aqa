@@ -9,7 +9,7 @@ The tool is particularly useful for ensuring genome assemblies meet quality stan
 
 1. Clone the `install_aqa.sh` script from the following link:
    ```
-   https://github.com/moshtaqtsr/aqa/blob/main/notebook/install_aqa.sh
+wget https://raw.githubusercontent.com/moshtaqtsr/aqa/main/notebook/install_aqa.sh
    ```
 
 2. Make the script executable:
