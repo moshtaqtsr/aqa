@@ -126,7 +126,7 @@ def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_con
         explode = (0.1, 0)  # explode the 1st slice
 
         plt.figure(figsize=(7, 5))
-        plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1%%', startangle=140)
+        plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
         plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         plt.title('Assembly Eligibility Distribution')
         plt.savefig(f'assembly_eligibility_distribution_{current_date}.jpg')
