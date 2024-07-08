@@ -3,9 +3,8 @@
 import os
 from datetime import datetime
 from Bio import SeqIO
-import pandas as pd
-import matplotlib.pyplot as plt
 import argparse
+from jinja2 import Environment, FileSystemLoader
 
 # Define functions for calculating N50 and L50
 def calculate_N50(sequence_lengths):
@@ -75,11 +74,10 @@ def process_fasta_file(file_path, cont_size_limit=500):
     genome_size = calculate_genome_size(genome_size_list)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
     
-    return n50, l50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit
+    return n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded
 
-# Main function
-def main(args):
-    input_dir = os.getcwd()
+# Main function to generate HTML report
+def generate_html_report(input_dir, args):
     data = []
     fasta_file_count = 0  # Counter for counting FASTA files processed
     
@@ -87,52 +85,45 @@ def main(args):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     current_date = datetime.now().strftime("%Y-%m-%d")
     
-    # Header information
-    header_txt = f"Title: Assembly Assessment Report\nInstitute: The Arctic University of Norway - Tromsø\nWritten by: Mushtaq T. S. AL-Rubaye\nTime: {current_time}\n\n"
-    header_excel = f"Assembly Assessment Report\n\nInstitute: The Arctic University of Norway - Tromsø\nWritten by: Mushtaq T. S. AL-Rubaye\nTime: {current_time}"
+    output_file_html = f"aqa_{current_date}.html"
     
-    output_file_txt = f"aqa_{current_date}.txt"
-    output_file_excel = f"aqa_{current_date}.xlsx"
+    # Prepare Jinja2 template environment
+    env = Environment(loader=FileSystemLoader('.'))
+    template = env.get_template('template.html')
     
-    with open(output_file_txt, 'w') as f_out:
-        f_out.write(header_txt)
-        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < 500 bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content range\tEligibility\n")
-        for file_name in os.listdir(input_dir):
-            if file_name.endswith('.fasta'):
-                fasta_file_count += 1  # Increment the counter for each FASTA file found
-                file_path = os.path.join(input_dir, file_name)
-                n50, l50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit = process_fasta_file(file_path)
-                contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
-                genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
-                gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
-                eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
-                data.append([file_name, n50, l50, num_contigs, contigs_shorter_than_limit, contigs_quality, genome_size, genome_size_quality, gc_content_rounded, gc_content_range, eligibility])
-                f_out.write(f"{file_name}\t{n50}\t{l50}\t{num_contigs}\t{contigs_shorter_than_limit}\t{contigs_quality}\t{genome_size}\t{genome_size_quality}\t{gc_content_rounded}\t{gc_content_range}\t{eligibility}\n")
-
-    # Write data to Excel file
-    df = pd.DataFrame(data, columns=["File", "N50", "L50", "Num Contigs", "Contigs < 500 bp", "Contigs Quality", "Genome Size", "Genome Size Quality", "GC Content", "GC Content range", "Eligibility"])
-    with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, header=False, startrow=3)
-        workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
-        worksheet.write('A1', header_excel)
+    for file_name in os.listdir(input_dir):
+        if file_name.endswith('.fasta'):
+            fasta_file_count += 1  # Increment the counter for each FASTA file found
+            file_path = os.path.join(input_dir, file_name)
+            n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
+            contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
+            genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
+            gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
+            eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
+            data.append({
+                'File': file_name,
+                'N50': n50,
+                'L50': l50,
+                'Num_Contigs': num_contigs,
+                'Contigs_Shorter_Than_500': contigs_shorter_than_limit,
+                'Contigs_Quality': contigs_quality,
+                'Genome_Size': genome_size,
+                'Genome_Size_Quality': genome_size_quality,
+                'GC_Content': gc_content_rounded,
+                'GC_Content_Range': gc_content_range,
+                'Eligibility': eligibility
+            })
     
-    # Generate and save plot if cutoffs are specified
-    if all(v is not None for v in [args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max]):
-        labels = ['Eligible', 'Not Eligible']
-        sizes = [df['Eligibility'].value_counts().get('Eligible', 0), df['Eligibility'].value_counts().get('Not Eligible', 0)]
-        colors = ['#66b3ff', '#ff9999']
-        explode = (0.1, 0)  # explode the 1st slice
-
-        plt.figure(figsize=(7, 5))
-        plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)  # corrected autopct format
-        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        plt.title('Assembly Eligibility Distribution')
-        plt.savefig(f'assembly_eligibility_distribution_{current_date}.jpg')
-        plt.close()  # Close the plot to avoid blocking
-
+    # Render the HTML template with data
+    html_output = template.render(data=data, current_time=current_time)
+    
+    # Write the rendered HTML to a file
+    with open(output_file_html, 'w') as f_out:
+        f_out.write(html_output)
+    
     # Print the count of FASTA files processed
     print(f"Number of FASTA files assessed: {fasta_file_count}")
+    print(f"HTML report generated: {output_file_html}")
 
 # Main block
 if __name__ == "__main__":
@@ -146,4 +137,72 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    main(args)
+    # Run the HTML report generation function
+    generate_html_report(os.getcwd(), args)
+
+    # HTML template for the report
+    template_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Assembly Assessment Report</title>
+        <style>
+            /* Add CSS styles for table headers and rows */
+            th {
+                background-color: #f2f2f2;
+                text-align: left;
+                padding: 8px;
+            }
+            td {
+                padding: 8px;
+            }
+            .eligible {
+                background-color: #c8e6c9; /* Light green */
+            }
+            .not-eligible {
+                background-color: #ffcdd2; /* Light red */
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Assembly Assessment Report</h1>
+        <p>Generated at {{ current_time }}</p>
+        <table>
+            <tr>
+                <th>File</th>
+                <th>N50</th>
+                <th>L50</th>
+                <th>Num Contigs</th>
+                <th>Contigs &lt; 500 bp</th>
+                <th>Contigs Quality</th>
+                <th>Genome Size</th>
+                <th>Genome Size Quality</th>
+                <th>GC Content</th>
+                <th>GC Content Range</th>
+                <th>Eligibility</th>
+            </tr>
+            {% for item in data %}
+            <tr class="{% if item.Eligibility == 'Not Eligible' %}not-eligible{% else %}eligible{% endif %}">
+                <td>{{ item.File }}</td>
+                <td>{{ item.N50 }}</td>
+                <td>{{ item.L50 }}</td>
+                <td>{{ item.Num_Contigs }}</td>
+                <td>{{ item.Contigs_Shorter_Than_500 }}</td>
+                <td>{{ item.Contigs_Quality }}</td>
+                <td>{{ item.Genome_Size }}</td>
+                <td>{{ item.Genome_Size_Quality }}</td>
+                <td>{{ item.GC_Content }}</td>
+                <td>{{ item.GC_Content_Range }}</td>
+                <td>{{ item.Eligibility }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+
+    # Write the template HTML to a file
+    with open('template.html', 'w') as f_template:
+        f_template.write(template_html)
