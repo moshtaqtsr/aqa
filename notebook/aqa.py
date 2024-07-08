@@ -6,6 +6,7 @@ from datetime import datetime
 from Bio import SeqIO
 import pandas as pd
 from jinja2 import Template
+from openpyxl import Workbook
 
 # Define functions for calculating N50 and L50
 def calculate_N50(sequence_lengths):
@@ -34,14 +35,14 @@ def calculate_L50(sequence_lengths):
 def calculate_genome_size(sequence_lengths):
     return sum(sequence_lengths)
 
-# Define functions for calculating GC content
+# Define function for calculating GC content
 def calculate_gc_content(sequence):
     gc_count = sequence.count('G') + sequence.count('C')
     total_count = len(sequence)
     gc_content = (gc_count / total_count) * 100
     return round(gc_content, 2)
 
-# Define functions for assessing eligibility
+# Define function for assessing eligibility
 def assess_eligibility(num_contigs, genome_size, gc_content, contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max):
     if contig_cutoff is None or genome_size_min is None or genome_size_max is None or gc_content_min is None or gc_content_max is None:
         return ''
@@ -90,7 +91,7 @@ def generate_excel_report(data, output_file_xlsx):
     df = pd.DataFrame(data)
     df.to_excel(output_file_xlsx, index=False)
 
-# Main function to generate HTML report
+# Function to generate HTML report
 def generate_html_report(input_dir, args):
     data = []
     fasta_file_count = 0  # Counter for counting FASTA files processed
@@ -200,4 +201,34 @@ def generate_html_report(input_dir, args):
             })
     
     # Render the HTML template with data
-    html_output = template.render(data=data, current_time=current_time
+    html_output = template.render(data=data, current_time=current_time)
+    
+    # Write the rendered HTML to a file
+    with open(output_file_html, 'w') as f_out:
+        f_out.write(html_output)
+    
+    # Generate text report
+    generate_text_report(data, output_file_txt)
+    
+    # Generate Excel report
+    generate_excel_report(data, output_file_xlsx)
+    
+    # Print the count of FASTA files processed
+    print(f"Number of FASTA files assessed: {fasta_file_count}")
+    print(f"HTML report generated: {output_file_html}")
+    print(f"Text report generated: {output_file_txt}")
+    print(f"Excel report generated: {output_file_xlsx}")
+
+# Main block
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Assess the quality of genome assemblies.")
+    parser.add_argument('--con-cut', type=int, help='Contig cutoff for eligibility')
+    parser.add_argument('--size-min', type=int, help='Minimum genome size for eligibility')
+    parser.add_argument('--size-max', type=int, help='Maximum genome size for eligibility')
+    parser.add_argument('--gc-min', type=float, help='Minimum GC content for eligibility')
+    parser.add_argument('--gc-max', type=float, help='Maximum GC content for eligibility')
+    parser.add_argument('--contig-lim', type=int, default=500, help='Threshold for counting contigs shorter than the specified size (default: 500 bp)')
+    
+    args = parser.parse_args()
+    
+    generate_html_report(os.getcwd(), args)
