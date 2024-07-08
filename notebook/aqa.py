@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import argparse
 from datetime import datetime
 from Bio import SeqIO
-import argparse
+import pandas as pd
 from jinja2 import Template
 
 # Define functions for calculating N50 and L50
@@ -76,6 +77,19 @@ def process_fasta_file(file_path, cont_size_limit=500):
     
     return n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded
 
+# Function to generate text report
+def generate_text_report(data, output_file_txt):
+    with open(output_file_txt, 'w') as f_out:
+        f_out.write(f"Assembly Assessment Report\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < 500 bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content Range\tEligibility\n")
+        for item in data:
+            f_out.write(f"{item['File']}\t{item['N50']}\t{item['L50']}\t{item['Num_Contigs']}\t{item['Contigs_Shorter_Than_500']}\t{item['Contigs_Quality']}\t{item['Genome_Size']}\t{item['Genome_Size_Quality']}\t{item['GC_Content']}\t{item['GC_Content_Range']}\t{item['Eligibility']}\n")
+
+# Function to generate Excel report
+def generate_excel_report(data, output_file_xlsx):
+    df = pd.DataFrame(data)
+    df.to_excel(output_file_xlsx, index=False)
+
 # Main function to generate HTML report
 def generate_html_report(input_dir, args):
     data = []
@@ -86,6 +100,8 @@ def generate_html_report(input_dir, args):
     current_date = datetime.now().strftime("%Y-%m-%d")
     
     output_file_html = f"aqa_{current_date}.html"
+    output_file_txt = f"aqa_{current_date}.txt"
+    output_file_xlsx = f"aqa_{current_date}.xlsx"
     
     # HTML template as a string
     html_template = """
@@ -184,26 +200,4 @@ def generate_html_report(input_dir, args):
             })
     
     # Render the HTML template with data
-    html_output = template.render(data=data, current_time=current_time)
-    
-    # Write the rendered HTML to a file
-    with open(output_file_html, 'w') as f_out:
-        f_out.write(html_output)
-    
-    # Print the count of FASTA files processed
-    print(f"Number of FASTA files assessed: {fasta_file_count}")
-    print(f"HTML report generated: {output_file_html}")
-
-# Main block
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Assess the quality of genome assemblies.")
-    parser.add_argument('--con-cut', type=int, help='Contig cutoff for eligibility')
-    parser.add_argument('--size-min', type=int, help='Minimum genome size for eligibility')
-    parser.add_argument('--size-max', type=int, help='Maximum genome size for eligibility')
-    parser.add_argument('--gc-min', type=float, help='Minimum GC content for eligibility')
-    parser.add_argument('--gc-max', type=float, help='Maximum GC content for eligibility')
-    parser.add_argument('--contig-lim', type=int, default=500, help='Threshold for counting contigs shorter than the specified size (default: 500 bp)')
-    
-    args = parser.parse_args()
-    
-    generate_html_report(os.getcwd(), args)
+    html_output = template.render(data=data, current_time=current_time
