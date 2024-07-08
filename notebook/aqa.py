@@ -219,12 +219,12 @@ def main(args):
 # Argument parser setup
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Assess genome assemblies.")
-    parser.add_argument('--con-cut', type=int, help="Contig cutoff for eligibility")
-    parser.add_argument('--size_min', type=int, help="Minimum genome size for eligibility")
-    parser.add_argument('--size_max', type=int, help="Maximum genome size for eligibility")
-    parser.add_argument('--gc_min', type=float, help="Minimum GC content for eligibility")
-    parser.add_argument('--gc_max', type=float, help="Maximum GC content for eligibility")
-    parser.add_argument('--contig-lim', type=int, default=500, help="Threshold for counting contigs shorter than the specified size (default: 500 bp)")
+    parser.add_argument('-cc', '--con-cut', type=int, help="Contig cutoff for eligibility")
+    parser.add_argument('--smin', '--size_min', type=int, help="Minimum genome size for eligibility")
+    parser.add_argument('--smax', '--size_max', type=int, help="Maximum genome size for eligibility")
+    parser.add_argument('--gcmin', '--gc_min', type=float, help="Minimum GC content for eligibility")
+    parser.add_argument('--gcmax', '--gc_max', type=float, help="Maximum GC content for eligibility")
+    parser.add_argument('-cl', '--contig-lim', type=int, default=500, help="Threshold for counting contigs shorter than the specified size (default: 500 bp)")
     parser.add_argument('-i', '--input-file', type=str, help="Specify a single input file (optional)")
 
     args = parser.parse_args()
