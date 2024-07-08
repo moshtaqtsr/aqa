@@ -30,7 +30,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 
-# Define functions for calculating N50
+# Define functions for calculating N50 and L50
 def calculate_N50(sequence_lengths):
     total_length = sum(sequence_lengths)
     half_length = total_length / 2
@@ -41,6 +41,17 @@ def calculate_N50(sequence_lengths):
         cumulative_length += length
         if cumulative_length >= half_length:
             return length
+
+def calculate_L50(sequence_lengths):
+    total_length = sum(sequence_lengths)
+    half_length = total_length / 2
+
+    sorted_lengths = sorted(sequence_lengths, reverse=True)
+    cumulative_length = 0
+    for idx, length in enumerate(sorted_lengths):
+        cumulative_length += length
+        if cumulative_length >= half_length:
+            return length, idx + 1  # Return L50 length and the number of contigs included
 
 # Define function for calculating genome size
 def calculate_genome_size(sequence_lengths):
@@ -65,6 +76,7 @@ def assess_eligibility(num_contigs, genome_size, gc_content, contig_cutoff, geno
 # Function to process each FASTA file
 def process_fasta_file(file_path, cont_size_limit=500):
     n50_list = []
+    l50_list = []
     num_contigs_list = []
     genome_size_list = []
     gc_content_list = []
@@ -81,10 +93,12 @@ def process_fasta_file(file_path, cont_size_limit=500):
             contigs_shorter_than_limit += 1
 
     n50 = calculate_N50(n50_list)
+    l50, num_contigs_included = calculate_L50(n50_list)
     num_contigs = sum(num_contigs_list)
     genome_size = calculate_genome_size(genome_size_list)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
-    return n50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit
+    
+    return n50, l50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit
 
 # Main function
 def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max, output_file_txt, output_file_excel, cont_size_limit):
@@ -101,21 +115,21 @@ def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_con
     
     with open(output_file_txt, 'w') as f_out:
         f_out.write(header_txt)
-        f_out.write("File\tN50\tNum Contigs\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content range\tEligibility\tContigs < {cont_size_limit} bp\n".format(cont_size_limit=cont_size_limit))
+        f_out.write("File\tN50\tL50\tNum Contigs\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content range\tEligibility\tContigs < {cont_size_limit} bp\n".format(cont_size_limit=cont_size_limit))
         for file_name in os.listdir(input_dir):
             if file_name.endswith('.fasta'):
                 fasta_file_count += 1  # Increment the counter for each FASTA file found
                 file_path = os.path.join(input_dir, file_name)
-                n50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit = process_fasta_file(file_path, cont_size_limit)
+                n50, l50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit = process_fasta_file(file_path, cont_size_limit)
                 contigs_quality = '' if contig_cutoff is None else ('Yes' if num_contigs <= contig_cutoff else 'No')
                 genome_size_quality = '' if genome_size_min is None or genome_size_max is None else ('Yes' if genome_size_min <= genome_size <= genome_size_max else 'No')
                 gc_content_range = '' if gc_content_min is None or gc_content_max is None else ('Warning' if not (gc_content_min <= gc_content_rounded <= gc_content_max) else '-')
                 eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max)
-                data.append([file_name, n50, num_contigs, contigs_quality, genome_size, genome_size_quality, gc_content_rounded, gc_content_range, eligibility, contigs_shorter_than_limit])
-                f_out.write(f"{file_name}\t{n50}\t{num_contigs}\t{contigs_quality}\t{genome_size}\t{genome_size_quality}\t{gc_content_rounded}\t{gc_content_range}\t{eligibility}\t{contigs_shorter_than_limit}\n")
+                data.append([file_name, n50, l50, num_contigs, contigs_quality, genome_size, genome_size_quality, gc_content_rounded, gc_content_range, eligibility, contigs_shorter_than_limit])
+                f_out.write(f"{file_name}\t{n50}\t{l50}\t{num_contigs}\t{contigs_quality}\t{genome_size}\t{genome_size_quality}\t{gc_content_rounded}\t{gc_content_range}\t{eligibility}\t{contigs_shorter_than_limit}\n")
 
     # Write data to Excel file
-    df = pd.DataFrame(data, columns=["File", "N50", "Num Contigs", "Contigs Quality", "Genome Size", "Genome Size Quality", "GC Content", "GC Content range", "Eligibility", "Contigs < {cont_size_limit} bp".format(cont_size_limit=cont_size_limit)])
+    df = pd.DataFrame(data, columns=["File", "N50", "L50", "Num Contigs", "Contigs Quality", "Genome Size", "Genome Size Quality", "GC Content", "GC Content range", "Eligibility", "Contigs < {cont_size_limit} bp".format(cont_size_limit=cont_size_limit)])
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, header=False, startrow=3)
         workbook = writer.book
@@ -133,6 +147,7 @@ def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_con
         plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)  # corrected autopct format
         plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         plt.title('Assembly Eligibility Distribution')
+        current_date = datetime.now().strftime("%Y-%m-%d")
         plt.savefig(f'assembly_eligibility_distribution_{current_date}.jpg')
         plt.close()  # Close the plot to avoid blocking
 
@@ -151,8 +166,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    output_file_txt = f"assemblies_assessment_{current_date}.txt"
-    output_file_excel = f"assemblies_assessment_{current_date}.xlsx"
-    
-    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max, output_file_txt, output_file_excel, args.contig_lim)
+    current_date = datetime.now().
