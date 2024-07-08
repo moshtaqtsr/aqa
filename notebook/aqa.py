@@ -201,34 +201,4 @@ def generate_html_report(input_dir, args):
             })
     
     # Render the HTML template with data
-    html_output = template.render(data=data, current_time=current_time)
-    
-    # Write the rendered HTML to a file
-    with open(output_file_html, 'w') as f_out:
-        f_out.write(html_output)
-    
-    # Generate text report
-    generate_text_report(data, output_file_txt)
-    
-    # Generate Excel report
-    generate_excel_report(data, output_file_xlsx)
-    
-    # Print the count of FASTA files processed
-    print(f"Number of FASTA files assessed: {fasta_file_count}")
-    print(f"HTML report generated: {output_file_html}")
-    print(f"Text report generated: {output_file_txt}")
-    print(f"Excel report generated: {output_file_xlsx}")
-
-# Main block
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Assess the quality of genome assemblies.")
-    parser.add_argument('--con-cut', type=int, help='Contig cutoff for eligibility')
-    parser.add_argument('--size-min', type=int, help='Minimum genome size for eligibility')
-    parser.add_argument('--size-max', type=int, help='Maximum genome size for eligibility')
-    parser.add_argument('--gc-min', type=float, help='Minimum GC content for eligibility')
-    parser.add_argument('--gc-max', type=float, help='Maximum GC content for eligibility')
-    parser.add_argument('--contig-lim', type=int, default=500, help='Threshold for counting contigs shorter than the specified size (default: 500 bp)')
-    
-    args = parser.parse_args()
-    
-    generate_html_report(os.getcwd(), args)
+    html
