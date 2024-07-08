@@ -78,12 +78,12 @@ def process_fasta_file(file_path, cont_size_limit=500):
     return n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded
 
 # Function to generate text report
-def generate_text_report(data, output_file_txt):
+def generate_text_report(data, output_file_txt, cont_size_limit):
     with open(output_file_txt, 'w') as f_out:
         f_out.write(f"Assembly Assessment Report\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < 500 bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tEligibility\n")
+        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < {} bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tEligibility\n".format(cont_size_limit))
         for item in data:
-            f_out.write(f"{item['File']}\t{item['N50']}\t{item['L50']}\t{item['Num_Contigs']}\t{item['Contigs_Shorter_Than_500']}\t{item['Contigs_Quality']}\t{item['Genome_Size']}\t{item['Genome_Size_Quality']}\t{item['GC_Content']}\t{item['Eligibility']}\n")
+            f_out.write(f"{item['File']}\t{item['N50']}\t{item['L50']}\t{item['Num_Contigs']}\t{item['Contigs_Shorter_Than_Limit']}\t{item['Contigs_Quality']}\t{item['Genome_Size']}\t{item['Genome_Size_Quality']}\t{item['GC_Content']}\t{item['Eligibility']}\n")
 
 # Function to generate Excel report
 def generate_excel_report(data, output_file_xlsx):
@@ -91,7 +91,7 @@ def generate_excel_report(data, output_file_xlsx):
     df.to_excel(output_file_xlsx, index=False)
 
 # Function to generate HTML report
-def generate_html_report(data, output_file_html, current_time):
+def generate_html_report(data, output_file_html, current_time, cont_size_limit):
     html_template = """
     <!DOCTYPE html>
     <html lang="en">
@@ -130,7 +130,7 @@ def generate_html_report(data, output_file_html, current_time):
                     <th>N50</th>
                     <th>L50</th>
                     <th>Num Contigs</th>
-                    <th>Contigs &lt; 500 bp</th>
+                    <th>Contigs &lt; {{ cont_size_limit }} bp</th>
                     <th>Contigs Quality</th>
                     <th>Genome Size</th>
                     <th>Genome Size Quality</th>
@@ -145,7 +145,7 @@ def generate_html_report(data, output_file_html, current_time):
                     <td>{{ item.N50 }}</td>
                     <td>{{ item.L50 }}</td>
                     <td>{{ item.Num_Contigs }}</td>
-                    <td>{{ item.Contigs_Shorter_Than_500 }}</td>
+                    <td>{{ item.Contigs_Shorter_Than_Limit }}</td>
                     <td>{{ item.Contigs_Quality }}</td>
                     <td>{{ item.Genome_Size }}</td>
                     <td>{{ item.Genome_Size_Quality }}</td>
@@ -159,7 +159,7 @@ def generate_html_report(data, output_file_html, current_time):
     </html>
     """
     template = Template(html_template)
-    rendered_html = template.render(data=data, current_time=current_time)
+    rendered_html = template.render(data=data, current_time=current_time, cont_size_limit=cont_size_limit)
 
     with open(output_file_html, 'w') as f_out:
         f_out.write(rendered_html)
@@ -186,7 +186,7 @@ def main(args):
     
     for file_path in input_files:
         fasta_file_count += 1  # Increment the counter for each FASTA file found
-        n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
+        n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path, args.contig_lim)
         contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
         genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
         
@@ -196,7 +196,7 @@ def main(args):
             'N50': n50,
             'L50': l50,
             'Num_Contigs': num_contigs,
-            'Contigs_Shorter_Than_500': contigs_shorter_than_limit,
+            'Contigs_Shorter_Than_Limit': contigs_shorter_than_limit,
             'Contigs_Quality': contigs_quality,
             'Genome_Size': genome_size,
             'Genome_Size_Quality': genome_size_quality,
@@ -205,9 +205,9 @@ def main(args):
         })
 
     # Generate reports
-    generate_text_report(data, output_file_txt)
+    generate_text_report(data, output_file_txt, args.contig_lim)
     generate_excel_report(data, output_file_xlsx)
-    generate_html_report(data, output_file_html, current_time)
+    generate_html_report(data, output_file_html, current_time, args.contig_lim)
     
     print(f"Reports generated: {output_file_txt}, {output_file_xlsx}, {output_file_html}")
     print(f"Number of FASTA files processed: {fasta_file_count}")
