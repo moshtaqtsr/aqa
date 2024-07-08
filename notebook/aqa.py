@@ -19,8 +19,8 @@ for lib, install_name in required_libraries.items():
         print(f"pip install {install_name}")
         all_installed = False
 
-if all_installed:
-    print("All required libraries are installed.")
+if not all_installed:
+    exit()
 
 # Import necessary libraries
 import os
@@ -166,4 +166,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    current_date = datetime.now().
+   
