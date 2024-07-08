@@ -190,10 +190,10 @@ def main(args):
     for file_path in input_files:
         fasta_file_count += 1  # Increment the counter for each FASTA file found
         n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
-        contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
-        genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
-        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
-        eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
+        contigs_quality = '' if args.cc is None else ('Yes' if num_contigs <= args.cc else 'No')
+        genome_size_quality = '' if args.smin is None or args.smax is None else ('Yes' if args.smin <= genome_size <= args.smax else 'No')
+        gc_content_range = '' if args.gcmin is None or args.gcmax is None else ('Warning' if not (args.gcmin <= gc_content_rounded <= args.gcmax) else '-')
+        eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.cc, args.smin, args.smax, args.gcmin, args.gcmax)
         data.append({
             'File': os.path.basename(file_path),
             'N50': n50,
@@ -220,10 +220,10 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Assess genome assemblies.")
     parser.add_argument('-cc', '--con-cut', type=int, help="Contig cutoff for eligibility")
-    parser.add_argument('--smin', '--size_min', type=int, help="Minimum genome size for eligibility")
-    parser.add_argument('--smax', '--size_max', type=int, help="Maximum genome size for eligibility")
-    parser.add_argument('--gcmin', '--gc_min', type=float, help="Minimum GC content for eligibility")
-    parser.add_argument('--gcmax', '--gc_max', type=float, help="Maximum GC content for eligibility")
+    parser.add_argument('--smin', type=int, help="Minimum genome size for eligibility")
+    parser.add_argument('--smax', type=int, help="Maximum genome size for eligibility")
+    parser.add_argument('--gcmin', type=float, help="Minimum GC content for eligibility")
+    parser.add_argument('--gcmax', type=float, help="Maximum GC content for eligibility")
     parser.add_argument('-cl', '--contig-lim', type=int, default=500, help="Threshold for counting contigs shorter than the specified size (default: 500 bp)")
     parser.add_argument('-i', '--input-file', type=str, help="Specify a single input file (optional)")
 
