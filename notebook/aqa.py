@@ -87,8 +87,12 @@ def generate_html_report(input_dir, args):
     
     output_file_html = f"aqa_{current_date}.html"
     
+    # Determine the path to the template.html file (assuming it's in the same directory as this script)
+    template_dir = os.path.dirname(os.path.abspath(__file__))
+    template_loader = FileSystemLoader(template_dir)
+    
     # Prepare Jinja2 template environment
-    env = Environment(loader=FileSystemLoader('.'))
+    env = Environment(loader=template_loader)
     template = env.get_template('template.html')
     
     for file_name in os.listdir(input_dir):
@@ -139,70 +143,3 @@ if __name__ == "__main__":
     
     # Run the HTML report generation function
     generate_html_report(os.getcwd(), args)
-
-    # HTML template for the report
-    template_html = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Assembly Assessment Report</title>
-        <style>
-            /* Add CSS styles for table headers and rows */
-            th {
-                background-color: #f2f2f2;
-                text-align: left;
-                padding: 8px;
-            }
-            td {
-                padding: 8px;
-            }
-            .eligible {
-                background-color: #c8e6c9; /* Light green */
-            }
-            .not-eligible {
-                background-color: #ffcdd2; /* Light red */
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Assembly Assessment Report</h1>
-        <p>Generated at {{ current_time }}</p>
-        <table>
-            <tr>
-                <th>File</th>
-                <th>N50</th>
-                <th>L50</th>
-                <th>Num Contigs</th>
-                <th>Contigs &lt; 500 bp</th>
-                <th>Contigs Quality</th>
-                <th>Genome Size</th>
-                <th>Genome Size Quality</th>
-                <th>GC Content</th>
-                <th>GC Content Range</th>
-                <th>Eligibility</th>
-            </tr>
-            {% for item in data %}
-            <tr class="{% if item.Eligibility == 'Not Eligible' %}not-eligible{% else %}eligible{% endif %}">
-                <td>{{ item.File }}</td>
-                <td>{{ item.N50 }}</td>
-                <td>{{ item.L50 }}</td>
-                <td>{{ item.Num_Contigs }}</td>
-                <td>{{ item.Contigs_Shorter_Than_500 }}</td>
-                <td>{{ item.Contigs_Quality }}</td>
-                <td>{{ item.Genome_Size }}</td>
-                <td>{{ item.Genome_Size_Quality }}</td>
-                <td>{{ item.GC_Content }}</td>
-                <td>{{ item.GC_Content_Range }}</td>
-                <td>{{ item.Eligibility }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </body>
-    </html>
-    """
-
-    # Write the template HTML to a file
-    with open('template.html', 'w') as f_template:
-        f_template.write(template_html)
