@@ -81,9 +81,9 @@ def process_fasta_file(file_path, cont_size_limit=500):
 def generate_text_report(data, output_file_txt):
     with open(output_file_txt, 'w') as f_out:
         f_out.write(f"Assembly Assessment Report\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < 500 bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content Range\tEligibility\n")
+        f_out.write("File\tN50\tL50\tNum Contigs\tContigs < 500 bp\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tEligibility\n")
         for item in data:
-            f_out.write(f"{item['File']}\t{item['N50']}\t{item['L50']}\t{item['Num_Contigs']}\t{item['Contigs_Shorter_Than_500']}\t{item['Contigs_Quality']}\t{item['Genome_Size']}\t{item['Genome_Size_Quality']}\t{item['GC_Content']}\t{item['GC_Content_Range']}\t{item['Eligibility']}\n")
+            f_out.write(f"{item['File']}\t{item['N50']}\t{item['L50']}\t{item['Num_Contigs']}\t{item['Contigs_Shorter_Than_500']}\t{item['Contigs_Quality']}\t{item['Genome_Size']}\t{item['Genome_Size_Quality']}\t{item['GC_Content']}\t{item['Eligibility']}\n")
 
 # Function to generate Excel report
 def generate_excel_report(data, output_file_xlsx):
@@ -135,7 +135,6 @@ def generate_html_report(data, output_file_html, current_time):
                     <th>Genome Size</th>
                     <th>Genome Size Quality</th>
                     <th>GC Content</th>
-                    <th>GC Content Range</th>
                     <th>Eligibility</th>
                 </tr>
             </thead>
@@ -151,7 +150,6 @@ def generate_html_report(data, output_file_html, current_time):
                     <td>{{ item.Genome_Size }}</td>
                     <td>{{ item.Genome_Size_Quality }}</td>
                     <td>{{ item.GC_Content }}</td>
-                    <td>{{ item.GC_Content_Range }}</td>
                     <td>{{ item.Eligibility }}</td>
                 </tr>
                 {% endfor %}
@@ -192,23 +190,6 @@ def main(args):
         contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
         genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
         
-        # Debugging: Print GC content and thresholds
-        print(f"File: {file_path}")
-        print(f"GC Content: {gc_content_rounded}")
-        print(f"GC Min: {args.gc_min}")
-        print(f"GC Max: {args.gc_max}")
-        
-        if args.gc_min is None or args.gc_max is None:
-            gc_content_range = ''
-        else:
-            if args.gc_min <= gc_content_rounded <= args.gc_max:
-                gc_content_range = '-'
-            else:
-                gc_content_range = 'Warning'
-        
-        # Debugging: Print GC content range
-        print(f"GC Content Range: {gc_content_range}")
-        
         eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
         data.append({
             'File': os.path.basename(file_path),
@@ -220,7 +201,6 @@ def main(args):
             'Genome_Size': genome_size,
             'Genome_Size_Quality': genome_size_quality,
             'GC_Content': gc_content_rounded,
-            'GC_Content_Range': gc_content_range,
             'Eligibility': eligibility
         })
 
