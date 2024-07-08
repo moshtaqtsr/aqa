@@ -20,35 +20,16 @@ def calculate_N50(sequence_lengths):
         if cumulative_length >= half_length:
             return length
 
-def calculate_L50(contig_lengths):
-    """
-    Calculate the L50 value of a genome assembly.
-
-    L50 is the number of contigs required to reach at least 50% of the total genome length.
-
-    :param contig_lengths: List of contig lengths
-    :return: L50 value (number of contigs)
-    """
-    # Sort contig lengths from longest to shortest
-    sorted_lengths = sorted(contig_lengths, reverse=True)
-    
-    # Calculate total genome length
-    total_length = sum(sorted_lengths)
-    
-    # Calculate the cumulative length required to reach 50% of the total genome length
+def calculate_L50(sequence_lengths):
+    total_length = sum(sequence_lengths)
     half_length = total_length / 2
-    
-    # Initialize cumulative length and L50 counter
+
+    sorted_lengths = sorted(sequence_lengths, reverse=True)
     cumulative_length = 0
-    l50_count = 0
-    
-    # Iterate over sorted contig lengths
-    for length in sorted_lengths:
+    for idx, length in enumerate(sorted_lengths):
         cumulative_length += length
-        l50_count += 1
-        # Check if cumulative length has reached or exceeded half of the total genome length
         if cumulative_length >= half_length:
-            return l50_count
+            return length, idx + 1  # Return L50 length and the number of contigs included
 
 # Define function for calculating genome size
 def calculate_genome_size(sequence_lengths):
@@ -89,7 +70,7 @@ def process_fasta_file(file_path, cont_size_limit=500):
             contigs_shorter_than_limit += 1
 
     n50 = calculate_N50(n50_list)
-    l50 = calculate_L50(n50_list)
+    l50 = calculate_L50(n50_list)[1]
     num_contigs = sum(num_contigs_list)
     genome_size = calculate_genome_size(genome_size_list)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
@@ -210,7 +191,24 @@ def main(args):
         n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
         contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
         genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
-        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('-' if args.gc_min <= gc_content_rounded <= args.gc_max else 'Warning')
+        
+        # Debugging: Print GC content and thresholds
+        print(f"File: {file_path}")
+        print(f"GC Content: {gc_content_rounded}")
+        print(f"GC Min: {args.gc_min}")
+        print(f"GC Max: {args.gc_max}")
+        
+        if args.gc_min is None or args.gc_max is None:
+            gc_content_range = ''
+        else:
+            if args.gc_min <= gc_content_rounded <= args.gc_max:
+                gc_content_range = '-'
+            else:
+                gc_content_range = 'Warning'
+        
+        # Debugging: Print GC content range
+        print(f"GC Content Range: {gc_content_range}")
+        
         eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
         data.append({
             'File': os.path.basename(file_path),
