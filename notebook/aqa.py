@@ -155,4 +155,4 @@ if __name__ == "__main__":
     output_file_txt = f"assemblies_assessment_{current_date}.txt"
     output_file_excel = f"assemblies_assessment_{current_date}.xlsx"
     
-    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max
+    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max, output_file_txt, output_file_excel, args.cont_size_li)
