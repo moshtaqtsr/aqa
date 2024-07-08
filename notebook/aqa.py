@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from Bio import SeqIO
 import argparse
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Template
 
 # Define functions for calculating N50 and L50
 def calculate_N50(sequence_lengths):
@@ -87,13 +87,78 @@ def generate_html_report(input_dir, args):
     
     output_file_html = f"aqa_{current_date}.html"
     
-    # Determine the path to the template.html file (assuming it's in the same directory as this script)
-    template_dir = os.path.dirname(os.path.abspath(__file__))
-    template_loader = FileSystemLoader(template_dir)
+    # HTML template as a string
+    html_template = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Assembly Report</title>
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            .eligible {
+                background-color: #c8e6c9;
+            }
+            .not-eligible {
+                background-color: #ffcdd2;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Assembly Assessment Report</h1>
+        <p>Report generated on {{ current_time }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>N50</th>
+                    <th>L50</th>
+                    <th>Num Contigs</th>
+                    <th>Contigs &lt; 500 bp</th>
+                    <th>Contigs Quality</th>
+                    <th>Genome Size</th>
+                    <th>Genome Size Quality</th>
+                    <th>GC Content</th>
+                    <th>GC Content Range</th>
+                    <th>Eligibility</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr class="{{ 'eligible' if item.Eligibility == 'Eligible' else 'not-eligible' }}">
+                    <td>{{ item.File }}</td>
+                    <td>{{ item.N50 }}</td>
+                    <td>{{ item.L50 }}</td>
+                    <td>{{ item.Num_Contigs }}</td>
+                    <td>{{ item.Contigs_Shorter_Than_500 }}</td>
+                    <td>{{ item.Contigs_Quality }}</td>
+                    <td>{{ item.Genome_Size }}</td>
+                    <td>{{ item.Genome_Size_Quality }}</td>
+                    <td>{{ item.GC_Content }}</td>
+                    <td>{{ item.GC_Content_Range }}</td>
+                    <td>{{ item.Eligibility }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
     
-    # Prepare Jinja2 template environment
-    env = Environment(loader=template_loader)
-    template = env.get_template('template.html')
+    # Create Jinja2 Template object
+    template = Template(html_template)
     
     for file_name in os.listdir(input_dir):
         if file_name.endswith('.fasta'):
@@ -141,5 +206,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Run the HTML report generation function
     generate_html_report(os.getcwd(), args)
