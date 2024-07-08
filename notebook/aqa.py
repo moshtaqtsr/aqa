@@ -20,16 +20,35 @@ def calculate_N50(sequence_lengths):
         if cumulative_length >= half_length:
             return length
 
-def calculate_L50(sequence_lengths):
-    total_length = sum(sequence_lengths)
-    half_length = total_length / 2
+def calculate_L50(contig_lengths):
+    """
+    Calculate the L50 value of a genome assembly.
 
-    sorted_lengths = sorted(sequence_lengths, reverse=True)
+    L50 is the number of contigs required to reach at least 50% of the total genome length.
+
+    :param contig_lengths: List of contig lengths
+    :return: L50 value (number of contigs)
+    """
+    # Sort contig lengths from longest to shortest
+    sorted_lengths = sorted(contig_lengths, reverse=True)
+    
+    # Calculate total genome length
+    total_length = sum(sorted_lengths)
+    
+    # Calculate the cumulative length required to reach 50% of the total genome length
+    half_length = total_length / 2
+    
+    # Initialize cumulative length and L50 counter
     cumulative_length = 0
-    for idx, length in enumerate(sorted_lengths):
+    l50_count = 0
+    
+    # Iterate over sorted contig lengths
+    for length in sorted_lengths:
         cumulative_length += length
+        l50_count += 1
+        # Check if cumulative length has reached or exceeded half of the total genome length
         if cumulative_length >= half_length:
-            return length, idx + 1  # Return L50 length and the number of contigs included
+            return l50_count
 
 # Define function for calculating genome size
 def calculate_genome_size(sequence_lengths):
@@ -54,7 +73,6 @@ def assess_eligibility(num_contigs, genome_size, gc_content, contig_cutoff, geno
 # Function to process each FASTA file
 def process_fasta_file(file_path, cont_size_limit=500):
     n50_list = []
-    l50_list = []
     num_contigs_list = []
     genome_size_list = []
     gc_content_list = []
@@ -71,7 +89,7 @@ def process_fasta_file(file_path, cont_size_limit=500):
             contigs_shorter_than_limit += 1
 
     n50 = calculate_N50(n50_list)
-    l50, num_contigs_included = calculate_L50(n50_list)
+    l50 = calculate_L50(n50_list)
     num_contigs = sum(num_contigs_list)
     genome_size = calculate_genome_size(genome_size_list)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
