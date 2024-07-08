@@ -147,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument('--size_max', type=int, help='Maximum genome size for eligibility')
     parser.add_argument('--gc_min', type=float, help='Minimum GC content for eligibility')
     parser.add_argument('--gc_max', type=float, help='Maximum GC content for eligibility')
-    parser.add_argument('--cont_size_li', type=int, default=500, help='Count contigs shorter than specified length (default 500 bp)')
+    parser.add_argument('--contig-lim', type=int, default=500, help='Threshold for counting contigs shorter than the specified size (default: 500 bp)')
     
     args = parser.parse_args()
     
@@ -155,4 +155,4 @@ if __name__ == "__main__":
     output_file_txt = f"assemblies_assessment_{current_date}.txt"
     output_file_excel = f"assemblies_assessment_{current_date}.xlsx"
     
-    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max, output_file_txt, output_file_excel, args.cont_size_li)
+    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max, output_file_txt, output_file_excel, args.contig_lim)
