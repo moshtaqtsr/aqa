@@ -63,11 +63,12 @@ def assess_eligibility(num_contigs, genome_size, gc_content, contig_cutoff, geno
         return 'Not Eligible'
 
 # Function to process each FASTA file
-def process_fasta_file(file_path):
+def process_fasta_file(file_path, cont_size_limit=500):
     n50_list = []
     num_contigs_list = []
     genome_size_list = []
     gc_content_list = []
+    contigs_shorter_than_limit = 0
     
     for record in SeqIO.parse(file_path, 'fasta'):
         sequence_length = len(record.seq)
@@ -75,15 +76,18 @@ def process_fasta_file(file_path):
         num_contigs_list.append(1)
         genome_size_list.append(sequence_length)
         gc_content_list.append(round(calculate_gc_content(record.seq), 2))
+        
+        if sequence_length < cont_size_limit:
+            contigs_shorter_than_limit += 1
 
     n50 = calculate_N50(n50_list)
     num_contigs = sum(num_contigs_list)
     genome_size = calculate_genome_size(genome_size_list)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
-    return n50, num_contigs, genome_size, gc_content_rounded, gc_content_list
+    return n50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit
 
 # Main function
-def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max, output_file_txt, output_file_excel):
+def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max, output_file_txt, output_file_excel, cont_size_limit):
     input_dir = os.getcwd()
     data = []
     fasta_file_count = 0  # Counter for counting FASTA files processed
@@ -97,21 +101,21 @@ def main(contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_con
     
     with open(output_file_txt, 'w') as f_out:
         f_out.write(header_txt)
-        f_out.write("File\tN50\tNum Contigs\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content range\tEligibility\n")
+        f_out.write("File\tN50\tNum Contigs\tContigs Quality\tGenome Size\tGenome Size Quality\tGC Content\tGC Content range\tEligibility\tContigs < {cont_size_limit} bp\n".format(cont_size_limit=cont_size_limit))
         for file_name in os.listdir(input_dir):
             if file_name.endswith('.fasta'):
                 fasta_file_count += 1  # Increment the counter for each FASTA file found
                 file_path = os.path.join(input_dir, file_name)
-                n50, num_contigs, genome_size, gc_content_rounded, gc_content_list = process_fasta_file(file_path)
+                n50, num_contigs, genome_size, gc_content_rounded, gc_content_list, contigs_shorter_than_limit = process_fasta_file(file_path, cont_size_limit)
                 contigs_quality = '' if contig_cutoff is None else ('Yes' if num_contigs <= contig_cutoff else 'No')
                 genome_size_quality = '' if genome_size_min is None or genome_size_max is None else ('Yes' if genome_size_min <= genome_size <= genome_size_max else 'No')
                 gc_content_range = '' if gc_content_min is None or gc_content_max is None else ('Warning' if not (gc_content_min <= gc_content_rounded <= gc_content_max) else '-')
                 eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, contig_cutoff, genome_size_min, genome_size_max, gc_content_min, gc_content_max)
-                data.append([file_name, n50, num_contigs, contigs_quality, genome_size, genome_size_quality, gc_content_rounded, gc_content_range, eligibility])
-                f_out.write(f"{file_name}\t{n50}\t{num_contigs}\t{contigs_quality}\t{genome_size}\t{genome_size_quality}\t{gc_content_rounded}\t{gc_content_range}\t{eligibility}\n")
+                data.append([file_name, n50, num_contigs, contigs_quality, genome_size, genome_size_quality, gc_content_rounded, gc_content_range, eligibility, contigs_shorter_than_limit])
+                f_out.write(f"{file_name}\t{n50}\t{num_contigs}\t{contigs_quality}\t{genome_size}\t{genome_size_quality}\t{gc_content_rounded}\t{gc_content_range}\t{eligibility}\t{contigs_shorter_than_limit}\n")
 
     # Write data to Excel file
-    df = pd.DataFrame(data, columns=["File", "N50", "Num Contigs", "Contigs Quality", "Genome Size", "Genome Size Quality", "GC Content", "GC Content range", "Eligibility"])
+    df = pd.DataFrame(data, columns=["File", "N50", "Num Contigs", "Contigs Quality", "Genome Size", "Genome Size Quality", "GC Content", "GC Content range", "Eligibility", "Contigs < {cont_size_limit} bp".format(cont_size_limit=cont_size_limit)])
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, header=False, startrow=3)
         workbook = writer.book
@@ -143,6 +147,7 @@ if __name__ == "__main__":
     parser.add_argument('--size_max', type=int, help='Maximum genome size for eligibility')
     parser.add_argument('--gc_min', type=float, help='Minimum GC content for eligibility')
     parser.add_argument('--gc_max', type=float, help='Maximum GC content for eligibility')
+    parser.add_argument('--cont_size_li', type=int, default=500, help='Count contigs shorter than specified length (default 500 bp)')
     
     args = parser.parse_args()
     
@@ -150,4 +155,4 @@ if __name__ == "__main__":
     output_file_txt = f"assemblies_assessment_{current_date}.txt"
     output_file_excel = f"assemblies_assessment_{current_date}.xlsx"
     
-    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max, output_file_txt, output_file_excel)
+    main(args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max
