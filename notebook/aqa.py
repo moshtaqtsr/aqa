@@ -13,7 +13,7 @@ def calculate_N50(sequence_lengths):
     total_length = sum(sequence_lengths)
     half_length = total_length / 2
 
-    sorted_lengths = sorted(sequence_lengths)
+    sorted_lengths = sorted(sequence_lengths, reverse=True)
     cumulative_length = 0
     for length in sorted_lengths:
         cumulative_length += length
@@ -29,7 +29,7 @@ def calculate_L50(sequence_lengths):
     for idx, length in enumerate(sorted_lengths):
         cumulative_length += length
         if cumulative_length >= half_length:
-            return length, idx + 1  # Return L50 length and the number of contigs included
+            return idx + 1  # Return the number of contigs included
 
 # Define function for calculating genome size
 def calculate_genome_size(sequence_lengths):
@@ -53,27 +53,22 @@ def assess_eligibility(num_contigs, genome_size, gc_content, contig_cutoff, geno
 
 # Function to process each FASTA file
 def process_fasta_file(file_path, cont_size_limit=500):
-    n50_list = []
-    l50_list = []
-    num_contigs_list = []
-    genome_size_list = []
+    sequence_lengths = []
     gc_content_list = []
     contigs_shorter_than_limit = 0
     
     for record in SeqIO.parse(file_path, 'fasta'):
         sequence_length = len(record.seq)
-        n50_list.append(sequence_length)
-        num_contigs_list.append(1)
-        genome_size_list.append(sequence_length)
-        gc_content_list.append(round(calculate_gc_content(record.seq), 2))
+        sequence_lengths.append(sequence_length)
+        gc_content_list.append(calculate_gc_content(record.seq))
         
         if sequence_length < cont_size_limit:
             contigs_shorter_than_limit += 1
 
-    n50 = calculate_N50(n50_list)
-    l50, num_contigs_included = calculate_L50(n50_list)
-    num_contigs = sum(num_contigs_list)
-    genome_size = calculate_genome_size(genome_size_list)
+    n50 = calculate_N50(sequence_lengths)
+    l50 = calculate_L50(sequence_lengths)
+    num_contigs = len(sequence_lengths)
+    genome_size = calculate_genome_size(sequence_lengths)
     gc_content_rounded = round(sum(gc_content_list) / len(gc_content_list), 2)
     
     return n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded
