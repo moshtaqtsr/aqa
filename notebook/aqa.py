@@ -92,19 +92,7 @@ def generate_excel_report(data, output_file_xlsx):
     df.to_excel(output_file_xlsx, index=False)
 
 # Function to generate HTML report
-def generate_html_report(input_dir, args):
-    data = []
-    fasta_file_count = 0  # Counter for counting FASTA files processed
-    
-    # Get current date and time
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    
-    output_file_html = f"aqa_{current_date}.html"
-    output_file_txt = f"aqa_{current_date}.txt"
-    output_file_xlsx = f"aqa_{current_date}.xlsx"
-    
-    # HTML template as a string
+def generate_html_report(data, output_file_html, current_time):
     html_template = """
     <!DOCTYPE html>
     <html lang="en">
@@ -173,9 +161,25 @@ def generate_html_report(input_dir, args):
     </body>
     </html>
     """
-    
-    # Create Jinja2 Template object
     template = Template(html_template)
+    rendered_html = template.render(data=data, current_time=current_time)
+
+    with open(output_file_html, 'w') as f_out:
+        f_out.write(rendered_html)
+
+# Main function
+def main(args):
+    input_dir = os.getcwd()
+    data = []
+    fasta_file_count = 0  # Counter for counting FASTA files processed
+    
+    # Get current date and time
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    
+    output_file_txt = f"aqa_{current_date}.txt"
+    output_file_xlsx = f"aqa_{current_date}.xlsx"
+    output_file_html = f"aqa_{current_date}.html"
     
     for file_name in os.listdir(input_dir):
         if file_name.endswith('.fasta'):
@@ -200,5 +204,22 @@ def generate_html_report(input_dir, args):
                 'Eligibility': eligibility
             })
     
-    # Render the HTML template with data
-    html
+    # Generate and save reports
+    generate_text_report(data, output_file_txt)
+    generate_excel_report(data, output_file_xlsx)
+    generate_html_report(data, output_file_html, current_time)
+    
+    print(f"Reports generated: {output_file_txt}, {output_file_xlsx}, {output_file_html}")
+
+# Argument parser setup
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Assess genome assemblies.")
+    parser.add_argument('--con-cut', type=int, help="Contig cutoff for eligibility")
+    parser.add_argument('--size_min', type=int, help="Minimum genome size for eligibility")
+    parser.add_argument('--size_max', type=int, help="Maximum genome size for eligibility")
+    parser.add_argument('--gc_min', type=float, help="Minimum GC content for eligibility")
+    parser.add_argument('--gc_max', type=float, help="Maximum GC content for eligibility")
+    parser.add_argument('--contig-lim', type=int, default=500, help="Threshold for counting contigs shorter than the specified size (default: 500 bp)")
+    
+    args = parser.parse_args()
+    main(args)
