@@ -169,7 +169,13 @@ def generate_html_report(data, output_file_html, current_time):
 
 # Main function
 def main(args):
-    input_dir = os.getcwd()
+    input_files = []
+    if args.input_file:
+        input_files = [args.input_file]
+    else:
+        input_dir = os.getcwd()
+        input_files = [os.path.join(input_dir, file_name) for file_name in os.listdir(input_dir) if file_name.endswith('.fasta')]
+
     data = []
     fasta_file_count = 0  # Counter for counting FASTA files processed
     
@@ -181,35 +187,34 @@ def main(args):
     output_file_xlsx = f"aqa_{current_date}.xlsx"
     output_file_html = f"aqa_{current_date}.html"
     
-    for file_name in os.listdir(input_dir):
-        if file_name.endswith('.fasta'):
-            fasta_file_count += 1  # Increment the counter for each FASTA file found
-            file_path = os.path.join(input_dir, file_name)
-            n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
-            contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
-            genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
-            gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
-            eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
-            data.append({
-                'File': file_name,
-                'N50': n50,
-                'L50': l50,
-                'Num_Contigs': num_contigs,
-                'Contigs_Shorter_Than_500': contigs_shorter_than_limit,
-                'Contigs_Quality': contigs_quality,
-                'Genome_Size': genome_size,
-                'Genome_Size_Quality': genome_size_quality,
-                'GC_Content': gc_content_rounded,
-                'GC_Content_Range': gc_content_range,
-                'Eligibility': eligibility
-            })
-    
-    # Generate and save reports
+    for file_path in input_files:
+        fasta_file_count += 1  # Increment the counter for each FASTA file found
+        n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
+        contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
+        genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
+        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
+        eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
+        data.append({
+            'File': os.path.basename(file_path),
+            'N50': n50,
+            'L50': l50,
+            'Num_Contigs': num_contigs,
+            'Contigs_Shorter_Than_500': contigs_shorter_than_limit,
+            'Contigs_Quality': contigs_quality,
+            'Genome_Size': genome_size,
+            'Genome_Size_Quality': genome_size_quality,
+            'GC_Content': gc_content_rounded,
+            'GC_Content_Range': gc_content_range,
+            'Eligibility': eligibility
+        })
+
+    # Generate reports
     generate_text_report(data, output_file_txt)
     generate_excel_report(data, output_file_xlsx)
     generate_html_report(data, output_file_html, current_time)
     
     print(f"Reports generated: {output_file_txt}, {output_file_xlsx}, {output_file_html}")
+    print(f"Number of FASTA files processed: {fasta_file_count}")
 
 # Argument parser setup
 if __name__ == "__main__":
@@ -220,6 +225,7 @@ if __name__ == "__main__":
     parser.add_argument('--gc_min', type=float, help="Minimum GC content for eligibility")
     parser.add_argument('--gc_max', type=float, help="Maximum GC content for eligibility")
     parser.add_argument('--contig-lim', type=int, default=500, help="Threshold for counting contigs shorter than the specified size (default: 500 bp)")
-    
+    parser.add_argument('-i', '--input-file', type=str, help="Specify a single input file (optional)")
+
     args = parser.parse_args()
     main(args)
