@@ -142,18 +142,18 @@ def generate_html_report(data, output_file_html, current_time):
             </thead>
             <tbody>
                 {% for item in data %}
-                <tr class="{{ 'eligible' if item.Eligibility == 'Eligible' else 'not-eligible' }}">
-                    <td>{{ item.File }}</td>
-                    <td>{{ item.N50 }}</td>
-                    <td>{{ item.L50 }}</td>
-                    <td>{{ item.Num_Contigs }}</td>
-                    <td>{{ item.Contigs_Shorter_Than_500 }}</td>
-                    <td>{{ item.Contigs_Quality }}</td>
-                    <td>{{ item.Genome_Size }}</td>
-                    <td>{{ item.Genome_Size_Quality }}</td>
-                    <td>{{ item.GC_Content }}</td>
-                    <td>{{ item.GC_Content_Range }}</td>
-                    <td>{{ item.Eligibility }}</td>
+                <tr class="{{ 'eligible' if item['Eligibility'] == 'Eligible' else 'not-eligible' }}">
+                    <td>{{ item['File'] }}</td>
+                    <td>{{ item['N50'] }}</td>
+                    <td>{{ item['L50'] }}</td>
+                    <td>{{ item['Num_Contigs'] }}</td>
+                    <td>{{ item['Contigs_Shorter_Than_500'] }}</td>
+                    <td>{{ item['Contigs_Quality'] }}</td>
+                    <td>{{ item['Genome_Size'] }}</td>
+                    <td>{{ item['Genome_Size_Quality'] }}</td>
+                    <td>{{ item['GC_Content'] }}</td>
+                    <td>{{ item['GC_Content_Range'] }}</td>
+                    <td>{{ item['Eligibility'] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -190,10 +190,10 @@ def main(args):
     for file_path in input_files:
         fasta_file_count += 1  # Increment the counter for each FASTA file found
         n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
-        contigs_quality = '' if args.cc is None else ('Yes' if num_contigs <= args.cc else 'No')
-        genome_size_quality = '' if args.smin is None or args.smax is None else ('Yes' if args.smin <= genome_size <= args.smax else 'No')
-        gc_content_range = '' if args.gcmin is None or args.gcmax is None else ('Warning' if not (args.gcmin <= gc_content_rounded <= args.gcmax) else '-')
-        eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.cc, args.smin, args.smax, args.gcmin, args.gcmax)
+        contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
+        genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
+        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
+        eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
         data.append({
             'File': os.path.basename(file_path),
             'N50': n50,
