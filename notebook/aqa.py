@@ -210,7 +210,7 @@ def main(args):
         n50, l50, num_contigs, contigs_shorter_than_limit, genome_size, gc_content_rounded = process_fasta_file(file_path)
         contigs_quality = '' if args.con_cut is None else ('Yes' if num_contigs <= args.con_cut else 'No')
         genome_size_quality = '' if args.size_min is None or args.size_max is None else ('Yes' if args.size_min <= genome_size <= args.size_max else 'No')
-        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('Warning' if not (args.gc_min <= gc_content_rounded <= args.gc_max) else '-')
+        gc_content_range = '' if args.gc_min is None or args.gc_max is None else ('-' if args.gc_min <= gc_content_rounded <= args.gc_max else 'Warning')
         eligibility = assess_eligibility(num_contigs, genome_size, gc_content_rounded, args.con_cut, args.size_min, args.size_max, args.gc_min, args.gc_max)
         data.append({
             'File': os.path.basename(file_path),
