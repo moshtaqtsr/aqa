@@ -85,13 +85,14 @@ def main(args):
     
     # Get current date and time
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_date = datetime.now().strftime("%Y-%m-%d")
     
     # Header information
     header_txt = f"Title: Assembly Assessment Report\nInstitute: The Arctic University of Norway - Tromsø\nWritten by: Mushtaq T. S. AL-Rubaye\nTime: {current_time}\n\n"
     header_excel = f"Assembly Assessment Report\n\nInstitute: The Arctic University of Norway - Tromsø\nWritten by: Mushtaq T. S. AL-Rubaye\nTime: {current_time}"
     
-    output_file_txt = 'assembly_assessment_report.txt'
-    output_file_excel = 'assembly_assessment_report.xlsx'
+    output_file_txt = f"aqa_{current_date}.txt"
+    output_file_excel = f"aqa_{current_date}.xlsx"
     
     with open(output_file_txt, 'w') as f_out:
         f_out.write(header_txt)
@@ -127,7 +128,6 @@ def main(args):
         plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)  # corrected autopct format
         plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         plt.title('Assembly Eligibility Distribution')
-        current_date = datetime.now().strftime("%Y-%m-%d")
         plt.savefig(f'assembly_eligibility_distribution_{current_date}.jpg')
         plt.close()  # Close the plot to avoid blocking
 
